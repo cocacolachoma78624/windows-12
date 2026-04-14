@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Windows 12 PRO MODE ⚡</title>
+
+<style>
+body{
+  margin:0;
+  font-family:Segoe UI;
+  background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+  height:100vh;
+  overflow:hidden;
+  color:white;
+}
+
+.desktop{
+  display:flex;
+  flex-wrap:wrap;
+  padding:20px;
+}
+
+.icon{
+  width:80px;
+  text-align:center;
+  margin:10px;
+  cursor:pointer;
+}
+
+.icon img{width:48px}
+
+.window{
+  position:absolute;
+  top:120px;
+  left:120px;
+  width:700px;
+  height:450px;
+  background:rgba(255,255,255,0.1);
+  backdrop-filter:blur(15px);
+  border-radius:15px;
+  display:none;
+  flex-direction:column;
+  overflow:hidden;
+}
+
+.window.active{
+  display:flex;
+  z-index:1000;
+}
+
+.window-header{
+  display:flex;
+  justify-content:space-between;
+  padding:8px;
+  background:rgba(0,0,0,0.3);
+  cursor:grab;
+  user-select:none;
+}
+
+.window-buttons span{
+  margin-left:8px;
+  cursor:pointer;
+}
+
+.window-content{
+  flex:1;
+  padding:10px;
+  overflow:hidden;
+}
+
+iframe{
+  width:100%;
+  height:100%;
+  border:none;
+  border-radius:10px;
+}
+
+.browser-bar{
+  display:flex;
+  gap:5px;
+  margin-bottom:5px;
+}
+
+.browser-bar input{
+  flex:1;
+  padding:6px;
+  border-radius:5px;
+  border:none;
+}
+
+.browser-bar button{
+  padding:6px;
+  border:none;
+  border-radius:5px;
+  cursor:pointer;
+}
+
+.taskbar{
+  position:fixed;
+  bottom:0;
+  width:100%;
+  height:60px;
+  background:rgba(255,255,255,0.1);
+  backdrop-filter:blur(10px);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:0 10px;
+}
+
+.task-icons{
+  display:flex;
+  gap:10px;
+}
+
+.task-icon{
+  width:40px;
+  height:40px;
+  background:rgba(255,255,255,0.2);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:10px;
+  cursor:pointer;
+}
+
+.start-btn{
+  width:45px;
+  height:45px;
+  background:rgba(255,255,255,0.2);
+  border-radius:12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+}
+
+.start-btn img{width:24px}
+
+.start-menu{
+  position:fixed;
+  bottom:70px;
+  left:50%;
+  transform:translateX(-50%) scale(0.9);
+  background:rgba(255,255,255,0.15);
+  backdrop-filter:blur(15px);
+  border-radius:20px;
+  padding:20px;
+  opacity:0;
+  pointer-events:none;
+  transition:0.3s;
+}
+
+.start-menu.active{
+  opacity:1;
+  transform:translateX(-50%) scale(1);
+  pointer-events:all;
+}
+
+.app{
+  padding:10px;
+  cursor:pointer;
+}
+
+.app:hover{
+  background:rgba(255,255,255,0.2);
+}
+
+canvas{
+  background:black;
+  border-radius:10px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- DESKTOP -->
+<div class="desktop">
+  <div class="icon" onclick="openApp('browser')">
+    <img src="https://cdn-icons-png.flaticon.com/512/300/300221.png">
+    <div>Browser</div>
+  </div>
+
+  <div class="icon" onclick="openApp('snake')">
+    <img src="https://cdn-icons-png.flaticon.com/512/616/616408.png">
+    <div>Snake</div>
+  </div>
+</div>
+
+<!-- BROWSER -->
+<div class="window" id="browser">
+  <div class="window-header">
+    INSANE Browser
+    <div class="window-buttons">
+      <span onclick="minimize('browser')">🟡</span>
+      <span onclick="maximize('browser')">🟢</span>
+      <span onclick="closeApp('browser')">❌</span>
+    </div>
+  </div>
+
+  <div class="window-content">
+    <div class="browser-bar">
+      <input id="urlInput" placeholder="Search or URL">
+      <button onclick="go()">GO</button>
+    </div>
+    <iframe id="frame" src="https://duckduckgo.com"></iframe>
+  </div>
+</div>
+
+<!-- SNAKE -->
+<div class="window" id="snake">
+  <div class="window-header">
+    Snake 🐍
+    <div class="window-buttons">
+      <span onclick="minimize('snake')">🟡</span>
+      <span onclick="maximize('snake')">🟢</span>
+      <span onclick="closeApp('snake')">❌</span>
+    </div>
+  </div>
+
+  <div class="window-content">
+    <canvas id="game" width="400" height="300"></canvas>
+  </div>
+</div>
+
+<!-- TASKBAR -->
+<div class="taskbar">
+  <div class="start-btn" onclick="toggleMenu()">☰</div>
+
+  <div class="task-icons">
+    <div class="task-icon" onclick="openApp('browser')">🌐</div>
+    <div class="task-icon" onclick="openApp('snake')">🐍</div>
+  </div>
+
+  <div id="clock"></div>
+</div>
+
+<!-- START MENU -->
+<div class="start-menu" id="menu">
+  <div class="app" onclick="openApp('browser')">Browser</div>
+  <div class="app" onclick="openApp('snake')">Snake</div>
+</div>
+
+<script>
+const menu = document.getElementById("menu");
+
+function toggleMenu(){
+  menu.classList.toggle("active");
+}
+
+function openApp(id){
+  document.querySelectorAll(".window").forEach(w=>{
+    w.classList.remove("active");
+  });
+
+  const el = document.getElementById(id);
+  el.style.display = "flex";
+  el.classList.add("active");
+}
+
+function closeApp(id){
+  const el = document.getElementById(id);
+  el.style.display = "none";
+}
+
+function minimize(id){
+  document.getElementById(id).style.display = "none";
+}
+
+function maximize(id){
+  const el = document.getElementById(id);
+  el.style.top = "0";
+  el.style.left = "0";
+  el.style.width = "100%";
+  el.style.height = "100%";
+}
+
+function go(){
+  const input = document.getElementById("urlInput");
+  const frame = document.getElementById("frame");
+
+  let val = input.value.trim();
+  frame.src = val.startsWith("http")
+    ? val
+    : "https://duckduckgo.com/?q=" + encodeURIComponent(val);
+}
+
+/* CLOCK */
+setInterval(()=>{
+  document.getElementById("clock").innerText =
+    new Date().toLocaleTimeString();
+},1000);
+
+/* DRAG FIXED */
+function drag(e, el){
+  let shiftX = e.clientX - el.getBoundingClientRect().left;
+  let shiftY = e.clientY - el.getBoundingClientRect().top;
+
+  function moveAt(x,y){
+    el.style.left = x - shiftX + "px";
+    el.style.top = y - shiftY + "px";
+  }
+
+  function onMove(e){
+    moveAt(e.pageX, e.pageY);
+  }
+
+  document.addEventListener("mousemove", onMove);
+
+  document.onmouseup = () => {
+    document.removeEventListener("mousemove", onMove);
+    document.onmouseup = null;
+  };
+}
+
+/* SNAKE GAME FIXED */
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+let snake, food, dx, dy, gameOver;
+
+function resetGame(){
+  snake = [{x:10,y:10}];
+  food = spawnFood();
+  dx = 1; dy = 0;
+  gameOver = false;
+}
+
+function spawnFood(){
+  return {
+    x: Math.floor(Math.random()*40),
+    y: Math.floor(Math.random()*30)
+  };
+}
+
+function draw(){
+  ctx.fillStyle="black";
+  ctx.fillRect(0,0,400,300);
+
+  if(gameOver){
+    ctx.fillStyle="red";
+    ctx.font="20px Arial";
+    ctx.fillText("GAME OVER",130,150);
+    return;
+  }
+
+  ctx.fillStyle="lime";
+  snake.forEach(s=>{
+    ctx.fillRect(s.x*10,s.y*10,10,10);
+  });
+
+  ctx.fillStyle="red";
+  ctx.fillRect(food.x*10,food.y*10,10,10);
+
+  let head = {
+    x: snake[0].x + dx,
+    y: snake[0].y + dy
+  };
+
+  if(head.x < 0 || head.y < 0 || head.x >= 40 || head.y >= 30){
+    gameOver = true;
+    return;
+  }
+
+  if(snake.some(s=>s.x===head.x && s.y===head.y)){
+    gameOver = true;
+    return;
+  }
+
+  snake.unshift(head);
+
+  if(head.x === food.x && head.y === food.y){
+    food = spawnFood();
+  } else {
+    snake.pop();
+  }
+}
+
+resetGame();
+setInterval(draw, 100);
+
+document.addEventListener("keydown", e=>{
+  if(e.key==="ArrowUp"){dx=0;dy=-1}
+  if(e.key==="ArrowDown"){dx=0;dy=1}
+  if(e.key==="ArrowLeft"){dx=-1;dy=0}
+  if(e.key==="ArrowRight"){dx=1;dy=0}
+  if(e.key==="r"||e.key==="R") resetGame();
+});
+</script>
+
+</body>
+</html>
